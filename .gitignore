@@ -1,0 +1,7 @@
+*~
+*.img
+*.inf
+*.m
+*.pyc
+.project
+.pydevproject
