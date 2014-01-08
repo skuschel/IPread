@@ -77,20 +77,27 @@ class IPreader(_Infreader):
         pslminimum = pslsaturate / 4.0
         self.scalefactors = np.array([1.0])
         self.scalefactorsstd = np.array([0.0])
-        pic0 = copy.copy(self.psls[0])
-        pic0[pic0 > pslsaturate] = np.nan
-        pic0[pic0 < pslminimum] = np.nan
+        sfvar = np.array([0.0])
+        piclast = copy.copy(self.psls[0])
+        piclast[piclast > pslsaturate] = np.nan
+        piclast[piclast < pslminimum] = np.nan
         for n in xrange(1, len(self.psls)):
-            picn = copy.copy(self.psls[n])
-            picn[picn > pslsaturate] = np.nan
-            picn[picn < pslminimum] = np.nan
-            A = pic0 / picn
-            self.scalefactors = np.append(self.scalefactors, np.median(A[np.isfinite(A)]))
-            self.scalefactorsstd = np.append(self.scalefactorsstd, np.std(A[np.isfinite(A)]))
+            picnext = copy.copy(self.psls[n])
+            picnext[picnext > pslsaturate] = np.nan
+            picnext[picnext < pslminimum] = np.nan
+            A = piclast / picnext
+            meand = np.median(A[np.isfinite(A)])
+            varianzd = np.var(A[np.isfinite(A)])
+            mean = self.scalefactors[n - 1] * meand
+            varianz = self.scalefactors[n - 1] ** 2 * varianzd + sfvar[n - 1] * meand ** 2 + varianzd ** 2 * sfvar[n - 1] ** 2
+            self.scalefactors = np.append(self.scalefactors, mean)
+            sfvar = np.append(sfvar, varianz)
+            piclast = picnext
+        self.scalefactorsstd = np.sqrt(sfvar)
 
         # Assemble HDR Image in PSL scale
-        self.psl = np.zeros(pic0.shape)
-        count = np.zeros(pic0.shape)
+        self.psl = np.zeros(piclast.shape)
+        count = np.zeros(piclast.shape)
         for n in xrange(len(self.psls)):
             if np.isnan(self.scalefactors[n]):
                 continue
