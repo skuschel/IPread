@@ -8,6 +8,8 @@ Author: Stephan Kuschel
 import numpy as np
 import os
 import warnings
+import glob
+import copy
 
 
 class _Infreader():
@@ -32,26 +34,78 @@ class _Infreader():
 
 
     def topsl(self, c):
-        return (self.R / 100.) ** 2 * (4000. / self.S) * 10.**(self.L * (c / 65536. - 0.5))
+        return (self.R / 100.) ** 2 * (4000. / self.S) * 10.**(self.L * (c / 65536.0 - 0.5))
 
     def __str__(self):
         return '<"' + self.name + '" R:' + str(self.R) + ' cols:' + str(self.cols) + ' rows:' + str(self.rows) + ' S:' + str(self.S) + ' L:' + str(self.L) + '>'
 
+    def __eq__(self, other):
+        '''
+        returns True if equal IP read out settings were used.
+        '''
+        settings = ['R', 'R2', 'cols', 'rows', 'S', 'L']
+        return all([getattr(self, s) == getattr(other, s) for s in settings])
 
 
 class IPreader(_Infreader):
 
     def __init__(self, filename):
         '''
-        filename must be given without extension.
+        if extension is given read only single file.
+        if no extension is given read and combine all files of pattern filname + '*'
         '''
-        _Infreader.__init__(self, filename + '.inf')
-        with open(filename + '.img') as f:
-            data = np.fromfile(f, dtype=np.uint16)
-        self.raw = np.reshape(data, (self.cols, self.rows))
-        self.raw = np.float64(self.raw)
-        self.psl = self.topsl(self.raw)
+        self.files = glob.glob(filename)
+        self.files = [f.strip('.img') for f in self.files]
+        self.files.sort()
 
+        _Infreader.__init__(self, self.files[0] + '.inf')
+        for f in self.files:
+            if not self == _Infreader(f + '.inf'):
+                raise Exception('File "' + f + '" was read using different read out settings. Refusing HDR assembly.')
+
+        dt = np.dtype(np.uint16)
+        dt = dt.newbyteorder('>')  # change to big endian
+        self.psls = []
+        for f in self.files:
+            with open(f + '.img', 'rb') as f:
+                raw = np.fromfile(f, dtype=dt)
+                raw = np.array(np.reshape(raw, (self.rows, self.cols)), dtype=np.float64)
+                self.psls.append(self.topsl(raw))
+
+        # Combine psl pictures to a single HDR picture
+        pslsaturate = self.topsl(65525.0)
+        pslminimum = pslsaturate / 4.0
+        self.scalefactors = np.array([1.0])
+        self.scalefactorsstd = np.array([0.0])
+        pic0 = copy.copy(self.psls[0])
+        pic0[pic0 > pslsaturate] = np.nan
+        pic0[pic0 < pslminimum] = np.nan
+        for n in xrange(1, len(self.psls)):
+            picn = copy.copy(self.psls[n])
+            picn[picn > pslsaturate] = np.nan
+            picn[picn < pslminimum] = np.nan
+            A = pic0 / picn
+            self.scalefactors = np.append(self.scalefactors, np.median(A[np.isfinite(A)]))
+            self.scalefactorsstd = np.append(self.scalefactorsstd, np.std(A[np.isfinite(A)]))
+
+        # Assemble HDR Image in PSL scale
+        self.psl = np.zeros(pic0.shape)
+        count = np.zeros(pic0.shape)
+        for n in xrange(len(self.psls)):
+            if np.isnan(self.scalefactors[n]):
+                continue
+            picn = copy.copy(self.psls[n])
+            picn[picn > pslsaturate] = 0
+            self.psl = self.psl + self.scalefactors[n] * picn
+            count = count + (picn > 0)
+        self.psl = self.psl / count
+
+
+    def __str__(self):
+        return '<"' + str(self.files) + '" R:' + str(self.R) + ' cols:' + str(self.cols) + ' rows:' + str(self.rows) \
+            + ' S:' + str(self.S) + ' L:' + str(self.L) + '\n' \
+            + 'Scalefactors:    ' + str(self.scalefactors) + '\n' \
+            + 'Scalefactorsstd: ' + str(self.scalefactorsstd) + ' >'
 
 
 # Command Line interface if started as a script and not imported
@@ -67,9 +121,9 @@ if __name__ == '__main__':
 
     ip = IPreader(args.file)
     print ip
-    print str(ip.psl)
 
-
+    plt.imshow(ip.psl)
+    plt.show(block=True)
 
 
 
