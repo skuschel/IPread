@@ -5,3 +5,7 @@
 *.pyc
 .project
 .pydevproject
+dist/
+build/
+IPread.egg-info/
+
