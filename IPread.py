@@ -49,13 +49,18 @@ class _Infreader():
 
 class IPreader(_Infreader):
 
-    def __init__(self, filename):
+    def __init__(self, *args):
         '''
         if extension is given read only single file.
         if no extension is given read and combine all files of pattern filname + '*'
         '''
-        self.files = glob.glob(filename)
+        if len(args) == 1:
+            self.files = glob.glob(args[0])
+        elif len(args) > 1: # List of filenames given
+            self.files = args
         self.files = [f.strip('.img') for f in self.files]
+        self.files = [f.strip('.inf') for f in self.files]
+        self.files = list(set(self.files)) # make list unique, so every file is only read once if name* results in a list containing .img and .inf files.
         self.files.sort()
 
         _Infreader.__init__(self, self.files[0] + '.inf')
@@ -123,10 +128,10 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', help='input file')
+    parser.add_argument('file', nargs='+', help='input file(s)')
     args = parser.parse_args()
 
-    ip = IPreader(args.file)
+    ip = IPreader(*args.file)
     print ip
 
     plt.imshow(ip.psl)
