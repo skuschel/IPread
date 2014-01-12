@@ -11,8 +11,10 @@ import warnings
 import glob
 import copy
 
+__version__ = 0
+__all__ = ['Infreader', 'IPreader']
 
-class _Infreader():
+class Infreader():
 
     def __init__(self, filename):
         '''
@@ -47,7 +49,7 @@ class _Infreader():
         return all([getattr(self, s) == getattr(other, s) for s in settings])
 
 
-class IPreader(_Infreader):
+class IPreader(Infreader):
 
     def __init__(self, *args):
         '''
@@ -56,16 +58,16 @@ class IPreader(_Infreader):
         '''
         if len(args) == 1:
             self.files = glob.glob(args[0])
-        elif len(args) > 1: # List of filenames given
+        elif len(args) > 1:  # List of filenames given
             self.files = args
         self.files = [f.strip('.img') for f in self.files]
         self.files = [f.strip('.inf') for f in self.files]
-        self.files = list(set(self.files)) # make list unique, so every file is only read once if name* results in a list containing .img and .inf files.
+        self.files = list(set(self.files))  # make list unique, so every file is only read once if name* results in a list containing .img and .inf files.
         self.files.sort()
 
-        _Infreader.__init__(self, self.files[0] + '.inf')
+        Infreader.__init__(self, self.files[0] + '.inf')
         for f in self.files:
-            if not self == _Infreader(f + '.inf'):
+            if not self == Infreader(f + '.inf'):
                 raise Exception('File "' + f + '" was read using different read out settings. Refusing HDR assembly.')
 
         dt = np.dtype(np.uint16)
