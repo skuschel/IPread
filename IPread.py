@@ -100,6 +100,12 @@ class IPreader(_Infreader):
             piclast = picnext
         self.scalefactorsstd = np.sqrt(sfvar)
 
+        # check consistency
+        if not all(self.scalefactors == sorted(self.scalefactors)):
+            warnings.warn('IP Files were not given is ascending read out order! This reduces quality of the assembled picture dramatically or makes it even impossible!')
+        if any(self.scalefactors < 1):
+            warnings.warn('PSL SCALE HAS CHANGED because the first file is always forced to have the scalefactor 1, but first file is NOT the first readout of the IP (in other words: there is at least one scalefactor < 1).')
+
         # Assemble HDR Image in PSL scale
         self.psl = np.zeros(piclast.shape)
         count = np.zeros(piclast.shape)
