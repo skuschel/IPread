@@ -1,6 +1,6 @@
 '''
 Module providing the IPreader class for reading Image Plates data files. Multiple Files
-can be combined to one Picture. Automatic PSL conversion is applied.
+can be combined to one single Image. Automatic PSL conversion is applied.
 
 Author: Stephan Kuschel
 '''
@@ -11,14 +11,18 @@ import warnings
 import glob
 import copy
 
-__version__ = 0
+__version__ = '0.1'
 __all__ = ['Infreader', 'IPreader']
 
 class Infreader():
 
     def __init__(self, filename):
         '''
-        Filename must be the .inf file of the IP Scanner
+        This class reads a single .inf file and provides informations about the read out settings used.
+        Since the read out settings define the PSL conversion, it also defines a function to calculate
+        the PSL value for a given number of counts at these readout settings.
+
+        filename must be the exact filename of the .inf file _including_ its extension.
         '''
         self.filename = filename
         self.name = os.path.basename(filename.strip('\n'))
@@ -36,6 +40,9 @@ class Infreader():
 
 
     def topsl(self, c):
+        """
+        returns the PSL value corresponding to the count number c at the readout settings defined by this Infreader object.
+        """
         return (self.R / 100.) ** 2 * (4000. / self.S) * 10.**(self.L * (c / 65536.0 - 0.5))
 
     def __str__(self):
@@ -53,8 +60,23 @@ class IPreader(Infreader):
 
     def __init__(self, *args):
         '''
-        if extension is given read only single file.
-        if no extension is given read and combine all files of pattern filname + '*'
+        returns an IPreader Object, that allows access to the PSL converted Image 'self.psl'. This is derived from the
+        class Infreader since all combined images MUST have identical read out settings.
+
+        *args can be
+        - a single file with '.img' or '.inf' or no extension. In this case this single file is read and converted.
+        - a single filename that can be extended into multiple filenames by 'glob.glob(filename)'. Those files are then
+          processed as follows:
+        - multiple files of the former type. In this case it is assumed, that all files are multiple readouts
+          of the same image plate in alpha-numerical order. All files are read and the program will try to combine them to a
+          single image with higher dynamic range.
+            
+        The returned IPreader object ip will have the following attributes:
+        - self.scalefactors - list of floats each readout need to be multiplied by
+        - self.scalefactorsstd - list of floats of standard deviation of scalefactors
+        - self.psls - list of numpy arrays each holding one image
+        - self.psl - the high dynamic range image created by combining the images in self.psls using self.scalefactors
+        
         '''
         if len(args) == 1:
             self.files = glob.glob(args[0])
@@ -135,8 +157,8 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('file', nargs='+', help='input file(s)')
+    parser = argparse.ArgumentParser(description='Previews the Image Plate readout(s) using matplotlib.')
+    parser.add_argument('file', nargs='+', help='input file(s) - can be *.inf or *.img or without extension.')
     args = parser.parse_args()
 
     ip = IPreader(*args.file)
