@@ -12,8 +12,25 @@ import glob
 import copy
 
 __version__ = '0.1'
-__all__ = ['Infreader', 'IPreader']
+__all__ = ['Infreader', 'IPreader', 'cnttopsl']
 
+
+# ----- Functions -----
+def cnttopsl(cnt, R, S, L):
+    '''
+    converts a count number cnt to PSL using the given values for R, S and L.
+    '''
+    return (R / 100.) ** 2 * (4000. / S) * 10.**(L * (cnt / 65536.0 - 0.5))
+
+def readimgtopsl((f, rows, cols, R, S, L)):
+    dt = np.dtype(np.uint16)
+    dt = dt.newbyteorder('>')  # change to big endian
+    with open(f + '.img', 'rb') as f:
+        ret = np.reshape(np.fromfile(f, dtype=dt), (rows, cols))
+    ret = cnttopsl(np.array(ret, dtype=np.float64), R, S, L)
+    return ret
+
+# ----- Classes -----
 class Infreader():
 
     def __init__(self, filename):
@@ -43,7 +60,7 @@ class Infreader():
         """
         returns the PSL value corresponding to the count number c at the readout settings defined by this Infreader object.
         """
-        return (self.R / 100.) ** 2 * (4000. / self.S) * 10.**(self.L * (c / 65536.0 - 0.5))
+        return cnttopsl(c, self.R, self.S, self.L)
 
     def __str__(self):
         return '<"' + self.name + '" R:' + str(self.R) + ' cols:' + str(self.cols) + ' rows:' + str(self.rows) + ' S:' + str(self.S) + ' L:' + str(self.L) + '>'
@@ -92,15 +109,11 @@ class IPreader(Infreader):
             if not self == Infreader(f + '.inf'):
                 raise Exception('File "' + f + '" was read using different read out settings. Refusing HDR assembly.')
 
-        dt = np.dtype(np.uint16)
-        dt = dt.newbyteorder('>')  # change to big endian
         self.psls = []
-        for f in self.files:
-            with open(f + '.img', 'rb') as f:
-                raw = np.fromfile(f, dtype=dt)
-                raw = np.array(np.reshape(raw, (self.rows, self.cols)), dtype=np.float64)
-                self.psls.append(self.topsl(raw))
-
+        from multiprocessing import Pool
+        pool = Pool(processes=3)
+        args = [(datei, self.rows, self.cols, self.R, self.S, self.L) for datei in self.files]
+        self.psls = pool.map(readimgtopsl, args)
         # Combine psl pictures to a single HDR picture
         pslsaturate = self.topsl(65525.0)
         pslminimum = pslsaturate / 4.0
@@ -164,8 +177,8 @@ if __name__ == '__main__':
     ip = IPreader(*args.file)
     print ip
 
-    plt.imshow(ip.psl)
-    plt.show(block=True)
+    #plt.imshow(ip.psl)
+    #plt.show(block=True)
 
 
 
