@@ -7,5 +7,5 @@
 .pydevproject
 dist/
 build/
-IPread.egg-info/
+ipread.egg-info/
 
