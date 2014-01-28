@@ -14,6 +14,7 @@ try:
     import numexpr as ne
 except ImportError:
     ne = None
+    warnings.warn('Install numexpr to improve performance of ipread.')
 
 __version__ = '0.1'
 __all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
@@ -128,12 +129,13 @@ class IPreader(Infreader):
         self.scalefactorsstd = np.array([0.0])
         sfvar = np.array([0.0])
         piclast = copy.copy(self.psls[0])
-        piclast[piclast > pslsaturate] = np.nan
-        piclast[piclast < pslminimum] = np.nan
+        piclast[(piclast > pslsaturate) | (piclast < pslminimum)] = np.nan
         for n in xrange(1, len(self.psls)):
             picnext = copy.copy(self.psls[n])
-            picnext[picnext > pslsaturate] = np.nan
-            picnext[picnext < pslminimum] = np.nan
+            if ne is None:
+                picnext[(picnext > pslsaturate) | (picnext < pslminimum)] = np.nan
+            else:
+                picnext[ne.evaluate('(picnext > pslsaturate) | (picnext < pslminimum)')] = np.nan
             A = piclast / picnext
             meand = np.median(A[np.isfinite(A)])
             varianzd = np.var(A[np.isfinite(A)])
@@ -158,9 +160,9 @@ class IPreader(Infreader):
                 continue
             picn = copy.copy(self.psls[n])
             picn[picn > pslsaturate] = 0
-            self.psl = self.psl + self.scalefactors[n] * picn
-            count = count + (picn > 0)
-        self.psl = self.psl / count
+            self.psl += self.scalefactors[n] * picn
+            count += (picn > 0)
+        self.psl /= count
 
 
     def __str__(self):
