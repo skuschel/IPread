@@ -10,9 +10,13 @@ import os
 import warnings
 import glob
 import copy
+try:
+    import numexpr as ne
+except ImportError:
+    ne = None
 
 __version__ = '0.1'
-__all__ = ['Infreader', 'IPreader', 'cnttopsl']
+__all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
 
 
 # ----- Functions -----
@@ -20,15 +24,22 @@ def cnttopsl(cnt, R, S, L):
     '''
     converts a count number cnt to PSL using the given values for R, S and L.
     '''
-    return (R / 100.) ** 2 * (4000. / S) * 10.**(L * (cnt / 65536.0 - 0.5))
+    if ne is None:
+        return (R / 100.) ** 2 * (4000. / S) * 10.**(L * (cnt / 65536.0 - 0.5))
+    else:
+        return ne.evaluate('(R / 100.) ** 2 * (4000. / S) * 10.**(L * (cnt / 65536.0 - 0.5))')
 
-def readimgtopsl((f, rows, cols, R, S, L)):
+
+def readimg(filename, rows, cols):
+    '''
+    Attempts to read the .img file filename (with or without '.img') assuming it was read with rows rows and cols cols.
+    '''
     dt = np.dtype(np.uint16)
     dt = dt.newbyteorder('>')  # change to big endian
-    with open(f + '.img', 'rb') as f:
+    filename.strip('.img')
+    with open(filename + '.img', 'rb') as f:
         ret = np.reshape(np.fromfile(f, dtype=dt), (rows, cols))
-    ret = cnttopsl(np.array(ret, dtype=np.float64), R, S, L)
-    return ret
+    return np.array(ret, dtype=np.float64)
 
 # ----- Classes -----
 class Infreader():
@@ -109,11 +120,7 @@ class IPreader(Infreader):
             if not self == Infreader(f + '.inf'):
                 raise Exception('File "' + f + '" was read using different read out settings. Refusing HDR assembly.')
 
-        self.psls = []
-        from multiprocessing import Pool
-        pool = Pool(processes=3)
-        args = [(datei, self.rows, self.cols, self.R, self.S, self.L) for datei in self.files]
-        self.psls = pool.map(readimgtopsl, args)
+        self.psls = [self.topsl(readimg(datei, self.rows, self.cols)) for datei in self.files]
         # Combine psl pictures to a single HDR picture
         pslsaturate = self.topsl(65525.0)
         pslminimum = pslsaturate / 4.0
