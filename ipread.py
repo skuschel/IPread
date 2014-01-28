@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 '''
 Module providing the IPreader class for reading Image Plates data files. Multiple Files
 can be combined to one single Image. Automatic PSL conversion is applied.
@@ -153,7 +155,6 @@ class IPreader(Infreader):
 # Command Line interface if started as a script and not imported
 if __name__ == '__main__':
     import matplotlib
-    matplotlib.use('GTKAgg')
     import matplotlib.pyplot as plt
     import argparse
 
