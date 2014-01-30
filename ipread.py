@@ -179,6 +179,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Previews the Image Plate readout(s) using matplotlib.')
     parser.add_argument('file', nargs='+', help='input file(s) - can be *.inf or *.img or without extension.')
     parser.add_argument('-l', help='list properties of assembled image, dont create any plots. No matplotlib is needed.', action='store_true')
+    parser.add_argument('--log', help='creates a log10 plot instead of a linear one.', action='store_true')
     parser.add_argument('-s', nargs='?', metavar='filename', dest='save', help='save picture of data using matplotlib. If this is given, no interactive window will appear. filename will be auto-generated if omitted.', default='')
     args = parser.parse_args()
     if args.save == None:
@@ -199,7 +200,11 @@ if __name__ == '__main__':
         matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
-    fig = plt.imshow(ip.psl)
+    if args.log:
+        fig = plt.imshow(np.log10(ip.psl))
+    else:
+        fig = plt.imshow(ip.psl)
+    plt.colorbar()
     if args.save:
         plt.savefig(args.save, dpi=400, transparent=True)
     else:
