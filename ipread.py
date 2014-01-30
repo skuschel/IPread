@@ -174,20 +174,36 @@ class IPreader(Infreader):
 
 # Command Line interface if started as a script and not imported
 if __name__ == '__main__':
-    import matplotlib
-    matplotlib.use('GTKAgg')
-    import matplotlib.pyplot as plt
     import argparse
 
     parser = argparse.ArgumentParser(description='Previews the Image Plate readout(s) using matplotlib.')
     parser.add_argument('file', nargs='+', help='input file(s) - can be *.inf or *.img or without extension.')
+    parser.add_argument('-l', help='list properties of assembled image, dont create any plots. No matplotlib is needed.', action='store_true')
+    parser.add_argument('-s', nargs='?', metavar='filename', dest='save', help='save picture of data using matplotlib. If this is given, no interactive window will appear. filename will be auto-generated if omitted.', default='')
     args = parser.parse_args()
+    if args.save == None:
+        args.save = args.file[0] + '.png'
+    elif args.save == '':
+        args.save = None
+    # now args.save cointains the savename or None
 
     ip = IPreader(*args.file)
     print ip
 
-    #plt.imshow(ip.psl)
-    #plt.show(block=True)
+    if args.l:
+        exit()
+
+    # create plots
+    import matplotlib
+    if args.save:
+        matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    fig = plt.imshow(ip.psl)
+    if args.save:
+        plt.savefig(args.save, dpi=400, transparent=True)
+    else:
+        plt.show(block=True)
 
 
 
