@@ -3,6 +3,7 @@
 *.inf
 *.m
 *.pyc
+*.png
 .project
 .pydevproject
 dist/

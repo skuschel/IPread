@@ -12,10 +12,39 @@ import os
 import warnings
 import glob
 import copy
+try:
+    import numexpr as ne
+except ImportError:
+    ne = None
+    warnings.warn('Install numexpr to improve performance of ipread.')
 
 __version__ = '0.1'
-__all__ = ['Infreader', 'IPreader']
+__all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
 
+
+# ----- Functions -----
+def cnttopsl(cnt, R, S, L):
+    '''
+    converts a count number cnt to PSL using the given values for R, S and L.
+    '''
+    if ne is None:
+        return (R / 100.) ** 2 * (4000. / S) * 10.**(L * (cnt / 65536.0 - 0.5))
+    else:
+        return ne.evaluate('(R / 100.) ** 2 * (4000. / S) * 10.**(L * (cnt / 65536.0 - 0.5))')
+
+
+def readimg(filename, rows, cols):
+    '''
+    Attempts to read the .img file filename (with or without '.img') assuming it was read with rows rows and cols cols.
+    '''
+    dt = np.dtype(np.uint16)
+    dt = dt.newbyteorder('>')  # change to big endian
+    filename.strip('.img')
+    with open(filename + '.img', 'rb') as f:
+        ret = np.reshape(np.fromfile(f, dtype=dt), (rows, cols))
+    return np.array(ret, dtype=np.float64)
+
+# ----- Classes -----
 class Infreader():
 
     def __init__(self, filename):
@@ -45,7 +74,7 @@ class Infreader():
         """
         returns the PSL value corresponding to the count number c at the readout settings defined by this Infreader object.
         """
-        return (self.R / 100.) ** 2 * (4000. / self.S) * 10.**(self.L * (c / 65536.0 - 0.5))
+        return cnttopsl(c, self.R, self.S, self.L)
 
     def __str__(self):
         return '<"' + self.name + '" R:' + str(self.R) + ' cols:' + str(self.cols) + ' rows:' + str(self.rows) + ' S:' + str(self.S) + ' L:' + str(self.L) + '>'
@@ -94,15 +123,7 @@ class IPreader(Infreader):
             if not self == Infreader(f + '.inf'):
                 raise Exception('File "' + f + '" was read using different read out settings. Refusing HDR assembly.')
 
-        dt = np.dtype(np.uint16)
-        dt = dt.newbyteorder('>')  # change to big endian
-        self.psls = []
-        for f in self.files:
-            with open(f + '.img', 'rb') as f:
-                raw = np.fromfile(f, dtype=dt)
-                raw = np.array(np.reshape(raw, (self.rows, self.cols)), dtype=np.float64)
-                self.psls.append(self.topsl(raw))
-
+        self.psls = [self.topsl(readimg(datei, self.rows, self.cols)) for datei in self.files]
         # Combine psl pictures to a single HDR picture
         pslsaturate = self.topsl(65525.0)
         pslminimum = pslsaturate / 4.0
@@ -110,12 +131,13 @@ class IPreader(Infreader):
         self.scalefactorsstd = np.array([0.0])
         sfvar = np.array([0.0])
         piclast = copy.copy(self.psls[0])
-        piclast[piclast > pslsaturate] = np.nan
-        piclast[piclast < pslminimum] = np.nan
+        piclast[(piclast > pslsaturate) | (piclast < pslminimum)] = np.nan
         for n in xrange(1, len(self.psls)):
             picnext = copy.copy(self.psls[n])
-            picnext[picnext > pslsaturate] = np.nan
-            picnext[picnext < pslminimum] = np.nan
+            if ne is None:
+                picnext[(picnext > pslsaturate) | (picnext < pslminimum)] = np.nan
+            else:
+                picnext[ne.evaluate('(picnext > pslsaturate) | (picnext < pslminimum)')] = np.nan
             A = piclast / picnext
             meand = np.median(A[np.isfinite(A)])
             varianzd = np.var(A[np.isfinite(A)])
@@ -140,9 +162,9 @@ class IPreader(Infreader):
                 continue
             picn = copy.copy(self.psls[n])
             picn[picn > pslsaturate] = 0
-            self.psl = self.psl + self.scalefactors[n] * picn
-            count = count + (picn > 0)
-        self.psl = self.psl / count
+            self.psl += self.scalefactors[n] * picn
+            count += (picn > 0)
+        self.psl /= count
 
 
     def __str__(self):
@@ -154,19 +176,41 @@ class IPreader(Infreader):
 
 # Command Line interface if started as a script and not imported
 if __name__ == '__main__':
-    import matplotlib
-    import matplotlib.pyplot as plt
     import argparse
 
     parser = argparse.ArgumentParser(description='Previews the Image Plate readout(s) using matplotlib.')
     parser.add_argument('file', nargs='+', help='input file(s) - can be *.inf or *.img or without extension.')
+    parser.add_argument('-l', help='list properties of assembled image, dont create any plots. No matplotlib is needed.', action='store_true')
+    parser.add_argument('--log', help='creates a log10 plot instead of a linear one.', action='store_true')
+    parser.add_argument('-s', nargs='?', metavar='filename', dest='save', help='save picture of data using matplotlib. If this is given, no interactive window will appear. filename will be auto-generated if omitted.', default='')
     args = parser.parse_args()
+    if args.save == None:
+        args.save = args.file[0] + '.png'
+    elif args.save == '':
+        args.save = None
+    # now args.save cointains the savename or None
 
     ip = IPreader(*args.file)
     print ip
 
-    plt.imshow(ip.psl)
-    plt.show(block=True)
+    if args.l:
+        exit()
+
+    # create plots
+    import matplotlib
+    if args.save:
+        matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    if args.log:
+        fig = plt.imshow(np.log10(ip.psl))
+    else:
+        fig = plt.imshow(ip.psl)
+    plt.colorbar()
+    if args.save:
+        plt.savefig(args.save, dpi=400, transparent=True)
+    else:
+        plt.show(block=True)
 
 
 
