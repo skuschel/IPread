@@ -10,7 +10,7 @@ def read(fname):
 setup(name='ipread',
     version=__version__,
 	author='Stephan Kuschel',
-	author_email='stephan.kuschel1@gmail.com',
+	author_email='stephan.kuschel@gmail.com',
 	description='Reads Imageplate files and combines multiple readouts to a single HDR if necessary. Can be used as module or with "python -m IPread" to have a CLI tool for fast preview.',
 	long_description=read('README.md'),
     url='https://github.com/skuschel/IPread',
