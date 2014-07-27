@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 
 from setuptools import setup
-from ipread import __version__
+from _version import __version__
 import os
 
 
@@ -18,6 +18,6 @@ setup(name='ipread',
                   'fast preview.',
       long_description=read('README.md'),
       url='https://github.com/skuschel/IPread',
-      py_modules=['ipread'],
+      py_modules=['ipread', '_version'],
       install_requires=['matplotlib', 'numpy']
       )
