@@ -1,0 +1,25 @@
+# Check this file before committing a new version:
+# http://lint.travis-ci.org/
+
+language: python
+
+python:
+  - "2.7"
+
+before_install:
+  - uname -a
+  - free -m
+  - df -h
+  - ulimit -a
+  - python -V
+
+# command to install dependencies
+# install: "pip install -r requirements.txt"
+
+install:
+  - pip install pep8
+
+
+# command to run tests
+script:
+  - pep8 . --statistics --count --show-source --ignore=W391
