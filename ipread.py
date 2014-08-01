@@ -206,8 +206,7 @@ class IPreader(Infreader):
             + 'Scalefactorsstd: ' + str(self.scalefactorsstd) + ' >'
 
 
-# Command Line interface if started as a script and not imported
-if __name__ == '__main__':
+def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Previews the Image Plate'
@@ -258,5 +257,8 @@ if __name__ == '__main__':
     else:
         plt.show(block=True)
 
+
+if __name__ == '__main__':
+    main()
 
 

@@ -19,6 +19,7 @@ setup(name='ipread',
       long_description=read('README.md'),
       url='https://github.com/skuschel/IPread',
       py_modules=['ipread'],
+      scripts=['scripts/ipread'],
       install_requires=['matplotlib', 'numpy'],
       classifiers=[
           'Intended Audience :: Science/Research',
