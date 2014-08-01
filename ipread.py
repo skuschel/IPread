@@ -13,7 +13,6 @@ import os
 import warnings
 import glob
 import copy
-from _version import *
 
 try:
     import numexpr as ne
@@ -22,6 +21,7 @@ except ImportError:
     warnings.warn('Install numexpr to improve performance of ipread.')
 
 __all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
+__version__ = '0.1.1'
 
 
 # ----- Functions -----
