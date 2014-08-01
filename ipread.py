@@ -212,6 +212,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Previews the Image Plate'
                                      'readout(s) using matplotlib.')
+    parser.add_argument('-V', '--version', action='version',
+                        version=__version__)
     parser.add_argument('file', nargs='+',
                         help='input file(s) - can be *.inf or *.img or '
                         'without extension.')
