@@ -21,7 +21,7 @@ except ImportError:
     warnings.warn('Install numexpr to improve performance of ipread.')
 
 __all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 # ----- Functions -----
