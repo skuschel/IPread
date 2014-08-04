@@ -7,6 +7,13 @@ Python Module for reading Image Plates and combining several readouts to a singl
 
 Installing
 ----------
+### IPread is now available on [pypi](http://pypi.python.org/pypi/ipread/)
+
+IPread is available in the python package index, thus it can be installed by using the python package manager pip:
+
+`pip install ipread`
+
+pip will download and install the latest version from [pypi](http://pypi.python.org/pypi/ipread/), thus no manual download is required. This is surely the easiest way to install ipread. 
 
 ### Don't install, just use
 
@@ -33,4 +40,4 @@ The CLI will provide an easy and fast way to run the python module as a script t
 
 `python2 -m ipread -h`
 
-for further instructions.
+for further instructions. In case your system is configured to read executables from a python specific script path, the command `ipread` will serve as an alias to `python2 -m ipread` after installation.
