@@ -1,19 +1,20 @@
 IPread
 ======
 [![Build Status](https://travis-ci.org/skuschel/IPread.svg?branch=master)](https://travis-ci.org/skuschel/IPread)
+[![version](https://pypip.in/version/ipread/badge.svg)](https://pypi.python.org/pypi/ipread/)
 
 Python Module for reading Image Plates and combining several readouts to a single Image converted to PSL scale.
 
 
 Installing
 ----------
-### IPread is now available on [pypi](http://pypi.python.org/pypi/ipread/)
+### IPread is now available on [pypi](https://pypi.python.org/pypi/ipread/)
 
 IPread is available in the python package index, thus it can be installed by using the python package manager pip:
 
 `pip install ipread`
 
-pip will download and install the latest version from [pypi](http://pypi.python.org/pypi/ipread/), thus no manual download is required. This is surely the easiest way to install ipread. 
+pip will download and install the latest version from [pypi](https://pypi.python.org/pypi/ipread/), thus no manual download is required. This is surely the easiest way to install ipread. 
 
 ### Don't install, just use
 
