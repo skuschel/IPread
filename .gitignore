@@ -10,3 +10,6 @@ dist/
 build/
 ipread.egg-info/
 _version.txt
+
+#Sphinx
+doc/_build

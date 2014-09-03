@@ -52,18 +52,18 @@ def readimg(filename, rows, cols):
 
 # ----- Classes -----
 class Infreader():
+    '''
+    This class reads a single .inf file and provides informations about
+    the read out settings used.
+    Since the read out settings define the PSL conversion, it also
+    defines a function to calculate
+    the PSL value for a given number of counts at these readout settings.
+
+    filename must be the exact filename of the .inf file _including_ its
+    extension.
+    '''
 
     def __init__(self, filename):
-        '''
-        This class reads a single .inf file and provides informations about
-        the read out settings used.
-        Since the read out settings define the PSL conversion, it also
-        defines a function to calculate
-        the PSL value for a given number of counts at these readout settings.
-
-        filename must be the exact filename of the .inf file _including_ its
-        extension.
-        '''
         self.filename = filename
         self.name = os.path.basename(filename.strip('\n'))
         with open(filename) as f:
@@ -99,33 +99,36 @@ class Infreader():
 
 
 class IPreader(Infreader):
+    '''
+    returns an IPreader Object, that allows access to the PSL converted
+    Image 'self.psl'. This is derived from the class Infreader since all
+    combined images MUST have identical read out settings.
+
+    *args can be
+
+    - a single file with '.img' or '.inf' or no extension.
+      In this case this single file is read and converted.
+    - a single filename that can be extended into multiple filenames
+      by 'glob.glob(filename)'. Those files are then processed as follows:
+    - multiple files of the former type. In this case it is assumed,
+      that all files are multiple readouts
+      of the same image plate in alpha-numerical order.
+      All files are read and the program will try to combine them to a
+      single image with higher dynamic range.
+
+    The returned IPreader object will have the following attributes:
+
+    - self.scalefactors - list of floats each readout needs to be
+      multiplied by
+    - self.scalefactorsstd - list of floats of standard deviation
+      of scalefactors
+    - self.psls - list of numpy arrays each holding one image
+      in the order of processing (should match order of readouts!).
+    - self.psl - the high dynamic range image created by combining
+      the images in self.psls using self.scalefactors
+    '''
 
     def __init__(self, *args):
-        '''
-        returns an IPreader Object, that allows access to the PSL converted
-        Image 'self.psl'. This is derived from the class Infreader since all
-        combined images MUST have identical read out settings.
-
-        *args can be
-        - a single file with '.img' or '.inf' or no extension.
-          In this case this single file is read and converted.
-        - a single filename that can be extended into multiple filenames
-          by 'glob.glob(filename)'. Those files are then processed as follows:
-        - multiple files of the former type. In this case it is assumed,
-          that all files are multiple readouts
-          of the same image plate in alpha-numerical order.
-          All files are read and the program will try to combine them to a
-          single image with higher dynamic range.
-
-        The returned IPreader object ip will have the following attributes:
-        - self.scalefactors - list of floats each readout needs to be
-          multiplied by
-        - self.scalefactorsstd - list of floats of standard deviation
-          of scalefactors
-        - self.psls - list of numpy arrays each holding one image
-        - self.psl - the high dynamic range image created by combining
-          the images in self.psls using self.scalefactors
-        '''
         if len(args) == 1:
             self.files = glob.glob(args[0])
         elif len(args) > 1:  # List of filenames given
