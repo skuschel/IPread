@@ -8,7 +8,7 @@ conversion is applied.
 Author: Stephan Kuschel
 '''
 
-import numpy as np
+
 import os
 import warnings
 import glob
@@ -42,6 +42,7 @@ def readimg(filename, rows, cols):
     Attempts to read the .img file filename (with or without '.img')
     assuming it was read with rows rows and cols cols.
     '''
+    import numpy as np
     dt = np.dtype(np.uint16)
     dt = dt.newbyteorder('>')  # change to big endian
     filename.strip('.img')
@@ -129,6 +130,7 @@ class IPreader(Infreader):
     '''
 
     def __init__(self, *args):
+        import numpy as np
         if len(args) == 1:
             self.files = glob.glob(args[0])
         elif len(args) > 1:  # List of filenames given
@@ -249,6 +251,7 @@ def main():
     if args.save:
         matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    import numpy as np
 
     if args.log:
         fig = plt.imshow(np.log10(ip.psl))
