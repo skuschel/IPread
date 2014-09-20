@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 '''
 Module providing the IPreader class for reading Image Plates data files.
@@ -9,6 +9,7 @@ Author: Stephan Kuschel
 '''
 
 
+from __future__ import absolute_import, division, print_function
 import os
 import warnings
 import glob
@@ -158,7 +159,7 @@ class IPreader(Infreader):
         sfvar = np.array([0.0])
         piclast = copy.copy(self.psls[0])
         piclast[(piclast > pslsaturate) | (piclast < pslminimum)] = np.nan
-        for n in xrange(1, len(self.psls)):
+        for n in range(1, len(self.psls)):
             picnext = copy.copy(self.psls[n])
             if ne is None:
                 indizes = (picnext > pslsaturate) | (picnext < pslminimum)
@@ -195,7 +196,7 @@ class IPreader(Infreader):
         # Assemble HDR Image in PSL scale
         self.psl = np.zeros(piclast.shape)
         count = np.zeros(piclast.shape)
-        for n in xrange(len(self.psls)):
+        for n in range(len(self.psls)):
             if np.isnan(self.scalefactors[n]):
                 continue
             picn = copy.copy(self.psls[n])
@@ -241,7 +242,7 @@ def main():
     # now args.save cointains the savename or None
 
     ip = IPreader(*args.file)
-    print ip
+    print(ip)
 
     if args.l:
         exit()
