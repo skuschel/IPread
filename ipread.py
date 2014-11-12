@@ -14,27 +14,37 @@ import warnings
 import glob
 import copy
 
-try:
-    import numexpr as ne
-except ImportError:
-    ne = None
-    warnings.warn('Install numexpr to improve performance of ipread.')
 
 __all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
 __version__ = '0.1.2'
 
 
 # ----- Functions -----
-def cnttopsl(cnt, R, S, L):
+def _cnttopsl_np(cnt, R, S, L):
     '''
-    converts a count number cnt to PSL using the given values for R, S and L.
+    converts a count number cnt to PSL using the given values for R, S, L.
+    numpy is used for calculations.
     '''
-    if ne is None:
-        return (R / 100.) ** 2 * (4000. / S) * \
-            10. ** (L * (cnt / 65536.0 - 0.5))
-    else:
+    return (R / 100.) ** 2 * (4000. / S) * \
+        10. ** (L * (cnt / 65536.0 - 0.5))
+cnttopsl = _cnttopsl_np
+
+
+try:
+    import numexpr as ne
+
+    def _cnttopsl_ne(cnt, R, S, L):
+        '''
+        converts a count number cnt to PSL using the given values for R, S, L.
+        numexpr is used for calculations.
+        '''
         return ne.evaluate('(R / 100.) ** 2 * (4000. / S) * '
                            '10.**(L * (cnt / 65536.0 - 0.5))')
+    cnttopsl = _cnttopsl_ne
+
+except ImportError:
+    ne = None
+    warnings.warn('Install numexpr to improve performance of ipread.')
 
 
 def readimg(filename, rows, cols):
