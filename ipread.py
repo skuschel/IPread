@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 '''
 Module providing the IPreader class for reading Image Plates data files.
@@ -8,7 +8,8 @@ conversion is applied.
 Author: Stephan Kuschel
 '''
 
-import numpy as np
+
+from __future__ import absolute_import, division, print_function
 import os
 import warnings
 import glob
@@ -52,6 +53,7 @@ def readimg(filename, rows, cols):
     Attempts to read the .img file filename (with or without '.img')
     assuming it was read with rows rows and cols cols.
     '''
+    import numpy as np
     dt = np.dtype(np.uint16)
     dt = dt.newbyteorder('>')  # change to big endian
     filename.strip('.img')
@@ -139,6 +141,7 @@ class IPreader(Infreader):
     '''
 
     def __init__(self, *args):
+        import numpy as np
         if len(args) == 1:
             self.files = glob.glob(args[0])
         elif len(args) > 1:  # List of filenames given
@@ -166,7 +169,7 @@ class IPreader(Infreader):
         sfvar = np.array([0.0])
         piclast = copy.copy(self.psls[0])
         piclast[(piclast > pslsaturate) | (piclast < pslminimum)] = np.nan
-        for n in xrange(1, len(self.psls)):
+        for n in range(1, len(self.psls)):
             picnext = copy.copy(self.psls[n])
             if ne is None:
                 indizes = (picnext > pslsaturate) | (picnext < pslminimum)
@@ -203,7 +206,7 @@ class IPreader(Infreader):
         # Assemble HDR Image in PSL scale
         self.psl = np.zeros(piclast.shape)
         count = np.zeros(piclast.shape)
-        for n in xrange(len(self.psls)):
+        for n in range(len(self.psls)):
             if np.isnan(self.scalefactors[n]):
                 continue
             picn = copy.copy(self.psls[n])
@@ -249,7 +252,7 @@ def main():
     # now args.save cointains the savename or None
 
     ip = IPreader(*args.file)
-    print ip
+    print(ip)
 
     if args.l:
         exit()
@@ -259,6 +262,7 @@ def main():
     if args.save:
         matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    import numpy as np
 
     if args.log:
         fig = plt.imshow(np.log10(ip.psl))
