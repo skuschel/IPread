@@ -139,7 +139,11 @@ class IPreader(Infreader):
       the images in self.psls using self.scalefactors
     '''
 
-    def __init__(self, raw_underexposed=42000.0, raw_overexposed=65525.0, *args):
+    def __init__(self, *args, **kwargs):
+        raw_underexposed = kwargs.pop('raw_underexposed', 42000.0)
+        raw_overexposed = kwargs.pop('raw_overexposed', 65525.0)
+        if len(kwargs) > 0:  # unused kwargs left
+            raise TypeError('unknown kwargs given: {:}'.format(kwargs))
         if len(args) == 1:
             self.files = glob.glob(args[0])
         elif len(args) > 1:  # List of filenames given
@@ -230,8 +234,8 @@ class IPreader(Infreader):
             A = self.getimgquotient(n)
             B = self._getrealimg(n + 1)
             fig = plt.figure()
-            plt.xlabel('x [px]')
-            plt.ylabel('y [px]')
+            plt.xlabel('x [pixel]')
+            plt.ylabel('y [pixel]')
             fig.set_size_inches(10, 10)
             plt.imshow(A)
             plt.clim([0.95 * A[np.isfinite(A)].min(), 1.05 * A[np.isfinite(A)].max()])
@@ -274,6 +278,9 @@ def main():
                         'If this is given, no interactive window will appear.'
                         ' filename will be auto-generated if omitted.',
                         default='')
+    parser.add_argument('-v', '--verbose', action='count',
+                        help='Verbose output. This shows an additional plot'
+                        'to verify the scalefactors calculated')
     args = parser.parse_args()
     if args.save is None:
         args.save = args.file[0] + '.png'
@@ -293,6 +300,7 @@ def main():
         matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
+    # data plot
     if args.log:
         fig = plt.imshow(np.log10(ip.psl))
     else:
@@ -303,6 +311,10 @@ def main():
     else:
         plt.show(block=True)
 
+    # scalefactor plot
+    if args.verbose > 0:
+        ip.plotscalefactors()
+        plt.show(block=True)
 
 if __name__ == '__main__':
     main()
