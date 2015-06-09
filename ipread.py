@@ -14,6 +14,7 @@ import os
 import warnings
 import glob
 import copy
+import numpy as np
 
 
 __all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
@@ -63,7 +64,7 @@ def readimg(filename, rows, cols):
 
 
 # ----- Classes -----
-class Infreader():
+class Infreader(object):
     '''
     This class reads a single .inf file and provides informations about
     the read out settings used.
@@ -134,14 +135,11 @@ class IPreader(Infreader):
       multiplied by
     - self.scalefactorsstd - list of floats of standard deviation
       of scalefactors
-    - self.psls - list of numpy arrays each holding one image
-      in the order of processing (should match order of readouts!).
     - self.psl - the high dynamic range image created by combining
       the images in self.psls using self.scalefactors
     '''
 
-    def __init__(self, *args):
-        import numpy as np
+    def __init__(self, raw_underexposed=42000.0, raw_overexposed=65525.0, *args):
         if len(args) == 1:
             self.files = glob.glob(args[0])
         elif len(args) > 1:  # List of filenames given
@@ -159,26 +157,16 @@ class IPreader(Infreader):
                 raise Exception('File "' + f + '" was read using different '
                                 'read out settings. Refusing HDR assembly.')
 
-        self.psls = [self.topsl(readimg(datei, self.rows, self.cols))
+        self.raw = [readimg(datei, self.rows, self.cols)
                      for datei in self.files]
         # Combine psl pictures to a single HDR picture
-        pslsaturate = self.topsl(65525.0)
-        pslminimum = pslsaturate / 4.0
+        self.rawsaturate = raw_overexposed
+        self.rawminimum = raw_underexposed
         self.scalefactors = np.array([1.0])
         self.scalefactorsstd = np.array([0.0])
         sfvar = np.array([0.0])
-        piclast = copy.copy(self.psls[0])
-        piclast[(piclast > pslsaturate) | (piclast < pslminimum)] = np.nan
-        for n in range(1, len(self.psls)):
-            picnext = copy.copy(self.psls[n])
-            if ne is None:
-                indizes = (picnext > pslsaturate) | (picnext < pslminimum)
-
-            else:
-                indizes = ne.evaluate('(picnext > pslsaturate) | '
-                                      '(picnext < pslminimum)')
-            picnext[indizes] = np.nan
-            A = piclast / picnext
+        for n in range(1, len(self.raw)):
+            A=self.getimgquotient(n-1)
             meand = np.median(A[np.isfinite(A)])
             varianzd = np.var(A[np.isfinite(A)])
             mean = self.scalefactors[n - 1] * meand
@@ -187,7 +175,6 @@ class IPreader(Infreader):
                 varianzd ** 2 * sfvar[n - 1] ** 2
             self.scalefactors = np.append(self.scalefactors, mean)
             sfvar = np.append(sfvar, varianz)
-            piclast = picnext
         self.scalefactorsstd = np.sqrt(sfvar)
 
         # check consistency
@@ -203,17 +190,60 @@ class IPreader(Infreader):
                           '(in other words: there is at least one'
                           'scalefactor < 1).')
 
-        # Assemble HDR Image in PSL scale
-        self.psl = np.zeros(piclast.shape)
-        count = np.zeros(piclast.shape)
-        for n in range(len(self.psls)):
+        # Assemble HDR Image in raw scale
+        self.raw_hdr = np.zeros(self.raw[0].shape)
+        count = np.zeros(self.raw[0].shape)
+        for n in range(len(self.raw)):
             if np.isnan(self.scalefactors[n]):
                 continue
-            picn = copy.copy(self.psls[n])
-            picn[picn > pslsaturate] = 0
-            self.psl += self.scalefactors[n] * picn
+            picn = copy.copy(self.raw[n])
+            picn[picn > self.rawsaturate] = 0
+            self.raw_hdr += self.scalefactors[n] * picn
             count += (picn > 0)
-        self.psl /= count
+        count[count==0]=1           #prefents dividing by zero
+        self.raw_hdr /= count
+
+    #Creats raw data, which is reduced by over- and underexposure
+    def _getrealimg(self, n):
+        realimg=copy.copy(self.raw[n])
+        realimg[(realimg > self.rawsaturate) | (realimg < self.rawminimum)]= np.nan
+        return realimg
+
+    # Creats the quotien between picture n and the following picture
+    def getimgquotient(self, n):
+        imgquotient=self._getrealimg(n)/self._getrealimg(n+1)
+        return imgquotient
+
+    def plotscalefactors(self):
+        '''
+        Plots the distribution of scalefactors between consecutive images.
+        This is to check manually that the hdr image assembly is done correctly.
+        '''
+        import matplotlib.pylab as plt
+
+        print('Scalefactors for HDR-assembling are', self.scalefactors)
+        print('Standard deviations for Scalefactors are', self.scalefactorsstd)
+
+        #Plots the scalefactordistribution and scalefactors for each pixelvalue
+        self.scaleforpix=range(len(self.raw))
+        for n in range(len(self.raw)-1):
+            A=self.getimgquotient(n)
+            B=self._getrealimg(n+1)
+            fig = plt.figure()
+            plt.xlabel('x [px]')
+            plt.ylabel('y [px]')
+            fig.set_size_inches(10,10)
+            plt.imshow(A)
+            plt.clim([0.95*A[np.isfinite(A)].min(),1.05*A[np.isfinite(A)].max()])
+            plt.colorbar()
+            fig = plt.figure()
+            linplotdata = np.array([B[np.isfinite(B)].flatten(),A[np.isfinite(B)].flatten()])
+            plt.plot(linplotdata[0,:],linplotdata[1,:],'ro')
+
+    @property
+    def psl(self):
+        return self.topsl(self.raw_hdr)
+
 
     def __str__(self):
         return '<"' + str(self.files) + '" R:' + str(self.R) + ' cols:' + str(self.cols) + ' rows:' + str(self.rows) \
@@ -262,7 +292,6 @@ def main():
     if args.save:
         matplotlib.use('Agg')
     import matplotlib.pyplot as plt
-    import numpy as np
 
     if args.log:
         fig = plt.imshow(np.log10(ip.psl))
