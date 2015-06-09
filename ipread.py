@@ -158,7 +158,7 @@ class IPreader(Infreader):
                                 'read out settings. Refusing HDR assembly.')
 
         self.raw = [readimg(datei, self.rows, self.cols)
-                     for datei in self.files]
+                    for datei in self.files]
         # Combine psl pictures to a single HDR picture
         self.rawsaturate = raw_overexposed
         self.rawminimum = raw_underexposed
@@ -166,7 +166,7 @@ class IPreader(Infreader):
         self.scalefactorsstd = np.array([0.0])
         sfvar = np.array([0.0])
         for n in range(1, len(self.raw)):
-            A=self.getimgquotient(n-1)
+            A = self.getimgquotient(n - 1)
             meand = np.median(A[np.isfinite(A)])
             varianzd = np.var(A[np.isfinite(A)])
             mean = self.scalefactors[n - 1] * meand
@@ -200,18 +200,18 @@ class IPreader(Infreader):
             picn[picn > self.rawsaturate] = 0
             self.raw_hdr += self.scalefactors[n] * picn
             count += (picn > 0)
-        count[count==0]=1           #prefents dividing by zero
+        count[count == 0] = 1  # prefents dividing by zero
         self.raw_hdr /= count
 
-    #Creats raw data, which is reduced by over- and underexposure
+    # Creats raw data, which is reduced by over- and underexposure
     def _getrealimg(self, n):
-        realimg=copy.copy(self.raw[n])
-        realimg[(realimg > self.rawsaturate) | (realimg < self.rawminimum)]= np.nan
+        realimg = copy.copy(self.raw[n])
+        realimg[(realimg > self.rawsaturate) | (realimg < self.rawminimum)] = np.nan
         return realimg
 
     # Creats the quotien between picture n and the following picture
     def getimgquotient(self, n):
-        imgquotient=self._getrealimg(n)/self._getrealimg(n+1)
+        imgquotient = self._getrealimg(n) / self._getrealimg(n + 1)
         return imgquotient
 
     def plotscalefactors(self):
@@ -224,29 +224,29 @@ class IPreader(Infreader):
         print('Scalefactors for HDR-assembling are', self.scalefactors)
         print('Standard deviations for Scalefactors are', self.scalefactorsstd)
 
-        #Plots the scalefactordistribution and scalefactors for each pixelvalue
-        self.scaleforpix=range(len(self.raw))
-        for n in range(len(self.raw)-1):
-            A=self.getimgquotient(n)
-            B=self._getrealimg(n+1)
+        # Plots the scalefactordistribution and scalefactors for each pixelvalue
+        self.scaleforpix = range(len(self.raw))
+        for n in range(len(self.raw) - 1):
+            A = self.getimgquotient(n)
+            B = self._getrealimg(n + 1)
             fig = plt.figure()
             plt.xlabel('x [px]')
             plt.ylabel('y [px]')
-            fig.set_size_inches(10,10)
+            fig.set_size_inches(10, 10)
             plt.imshow(A)
-            plt.clim([0.95*A[np.isfinite(A)].min(),1.05*A[np.isfinite(A)].max()])
+            plt.clim([0.95 * A[np.isfinite(A)].min(), 1.05 * A[np.isfinite(A)].max()])
             plt.colorbar()
             fig = plt.figure()
-            linplotdata = np.array([B[np.isfinite(B)].flatten(),A[np.isfinite(B)].flatten()])
-            plt.plot(linplotdata[0,:],linplotdata[1,:],'ro')
+            linplotdata = np.array([B[np.isfinite(B)].flatten(), A[np.isfinite(B)].flatten()])
+            plt.plot(linplotdata[0, :], linplotdata[1, :], 'ro')
 
     @property
     def psl(self):
         return self.topsl(self.raw_hdr)
 
-
     def __str__(self):
-        return '<"' + str(self.files) + '" R:' + str(self.R) + ' cols:' + str(self.cols) + ' rows:' + str(self.rows) \
+        return '<"' + str(self.files) + '" R:' + str(self.R) \
+            + ' cols:' + str(self.cols) + ' rows:' + str(self.rows) \
             + ' S:' + str(self.S) + ' L:' + str(self.L) + '\n' \
             + 'Scalefactors:    ' + str(self.scalefactors) + '\n' \
             + 'Scalefactorsstd: ' + str(self.scalefactorsstd) + ' >'

@@ -6,4 +6,4 @@
 # ln -s ../../run-tests.sh .git/hooks/pre-commit
 #
 
-pep8 ipread.py --statistics --count --show-source --ignore=W391
+pep8 ipread.py --statistics --count --show-source --ignore=W391 --max-line-length=99
