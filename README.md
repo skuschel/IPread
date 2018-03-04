@@ -1,7 +1,7 @@
 IPread
 ======
 [![Build Status](https://travis-ci.org/skuschel/IPread.svg?branch=master)](https://travis-ci.org/skuschel/IPread)
-[![version](https://pypip.in/version/ipread/badge.svg)](https://pypi.python.org/pypi/ipread/)
+[![version](https://img.shields.io/pypi/v/ipread.svg)](https://pypi.python.org/pypi/ipread/)
 [![Documentation Status](https://readthedocs.org/projects/ipread/badge/?version=latest)](http://ipread.readthedocs.org)
 
 Python Module for reading Image Plates and combining several readouts to a single Image converted to PSL scale.
