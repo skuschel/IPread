@@ -9,3 +9,13 @@
 pycodestyle ipread.py --statistics --count --show-source --ignore=W391 --max-line-length=99
 
 python -m ipread -h
+
+mkdir -p _testdata
+cd _testdata
+
+# some example data found on the internet...
+wget --no-clobber http://public.gettysburg.edu/~bcrawfor/physics/nHe4/BeamImages/output.inf
+wget --no-clobber http://public.gettysburg.edu/~bcrawfor/physics/nHe4/BeamImages/output.img
+
+ipread output* -v -s final.png
+ipread output* -v --log -s final_log.png

@@ -88,8 +88,8 @@ class Infreader(object):
         self.R2 = int(inf[4])
         self.cols = int(inf[6])
         self.rows = int(inf[7])
-        self.S = int(inf[8])
-        self.L = int(inf[9])
+        self.S = float(inf[8])
+        self.L = float(inf[9])
         if self.R != self.R2:
             warnings.warn('The Pixels of the IP picture are no squares.')
 
@@ -314,7 +314,7 @@ def main():
         plt.show(block=True)
 
     # scalefactor plot
-    if args.verbose > 0:
+    if args.verbose:
         ip.plotscalefactors()
         plt.show(block=True)
 
