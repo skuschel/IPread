@@ -29,6 +29,8 @@ def _cnttopsl_np(cnt, R, S, L):
     '''
     return (R / 100.) ** 2 * (4000. / S) * \
         10. ** (L * (cnt / 65536.0 - 0.5))
+
+
 cnttopsl = _cnttopsl_np
 
 
@@ -316,7 +318,6 @@ def main():
         ip.plotscalefactors()
         plt.show(block=True)
 
+
 if __name__ == '__main__':
     main()
-
-
