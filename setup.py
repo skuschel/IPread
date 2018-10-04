@@ -15,7 +15,7 @@ setup(name='ipread',
       url='https://github.com/skuschel/IPread',
       py_modules=['ipread'],
       scripts=['scripts/ipread'],
-      install_requires=['matplotlib', 'numpy'],
+      install_requires=['matplotlib', 'numpy', 'numexpr'],
       license='GPL',
       classifiers=[
           'Intended Audience :: Science/Research',
