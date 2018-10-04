@@ -2,9 +2,13 @@
 # http://lint.travis-ci.org/
 
 language: python
+sudo: false
+dist: trusty
 
 python:
-  - "2.7"
+  - 2.7
+  - 3.5
+  - 3.6
 
 before_install:
   - uname -a
@@ -14,10 +18,9 @@ before_install:
   - python -V
 
 # command to install dependencies
-# install: "pip install -r requirements.txt"
-
 install:
-  - pip install pep8
+  - pip install -r pip-requirements.txt
+  - python setup.py install
 
 
 # command to run tests

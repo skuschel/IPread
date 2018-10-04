@@ -7,3 +7,5 @@
 #
 
 pycodestyle ipread.py --statistics --count --show-source --ignore=W391 --max-line-length=99
+
+python -m ipread -h

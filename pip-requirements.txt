@@ -1,5 +1,7 @@
 sphinxcontrib-programoutput
 numpy
+numexpr
 mock
 argparse
 matplotlib
+pycodestyle
