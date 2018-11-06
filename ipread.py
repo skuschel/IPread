@@ -151,9 +151,13 @@ class IPreader(Infreader):
 
         Infreader.__init__(self, self.files[0] + '.inf')
         for f in self.files:
-            if not self == Infreader(f + '.inf'):
-                raise Exception('File "' + f + '" was read using different '
-                                'read out settings. Refusing HDR assembly.')
+            # Ensure equal readout setting (only sensitivity S may differ)
+            other = Infreader(f + '.inf')
+            settings = ['R', 'R2', 'cols', 'rows', 'L', 'S']
+            if not all([getattr(self, s) == getattr(other, s) for s in settings]):
+                raise Exception('File "{}" was read using different '
+                                'read out settings than "{}". Refusing HDR '
+                                'assembly.'.format(other, Infreader.__str__(self)))
 
         self.raw = [readimg(datei, self.rows, self.cols)
                     for datei in self.files]
@@ -255,6 +259,10 @@ class IPreader(Infreader):
             + ' S:' + str(self.S) + ' L:' + str(self.L) + '\n' \
             + 'Scalefactors:    ' + str(self.scalefactors) + '\n' \
             + 'Scalefactorsstd: ' + str(self.scalefactorsstd) + ' >'
+
+    def __eq__(self, other):
+        settings = ['R', 'R2', 'cols', 'rows', 'S', 'L', 'scalefactors', 'files']
+        return all([getattr(self, s) == getattr(other, s) for s in settings])
 
     __repr__ = __str__
 
