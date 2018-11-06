@@ -128,11 +128,13 @@ class IPreader(Infreader):
         if len(kwargs) > 0:  # unused kwargs left
             raise TypeError('unknown kwargs given: {:}'.format(kwargs))
         if len(args) == 1:
-            self.files = glob.glob(args[0])
+            self.files = glob.glob(args[0])  # this always returns a list
         elif len(args) > 1:  # List of filenames given
             self.files = args
-        self.files = [f.strip('.img') for f in self.files]
-        self.files = [f.strip('.inf') for f in self.files]
+
+        def removeext(s):
+            return s[:-4] if s.endswith('.img') or s.endswith('.inf') else s
+        self.files = [removeext(f) for f in self.files]
         # make list unique, so every file is only read once if
         # name* results in a list containing .img and .inf files.
         self.files = list(set(self.files))
