@@ -132,7 +132,7 @@ class IPreader(Infreader):
     '''
 
     def __init__(self, *args, **kwargs):
-        raw_underexposed = kwargs.pop('raw_underexposed', 42000.0)
+        raw_underexposed = kwargs.pop('raw_underexposed', 40000.0)
         raw_overexposed = kwargs.pop('raw_overexposed', 65525.0)
         if len(kwargs) > 0:  # unused kwargs left
             raise TypeError('unknown kwargs given: {:}'.format(kwargs))
@@ -153,7 +153,7 @@ class IPreader(Infreader):
         for f in self.files:
             # Ensure equal readout setting (only sensitivity S may differ)
             other = Infreader(f + '.inf')
-            settings = ['R', 'R2', 'cols', 'rows', 'L', 'S']
+            settings = ['R', 'R2', 'cols', 'rows', 'L']
             if not all([getattr(self, s) == getattr(other, s) for s in settings]):
                 raise Exception('File "{}" was read using different '
                                 'read out settings than "{}". Refusing HDR '
@@ -247,7 +247,7 @@ class IPreader(Infreader):
             plt.colorbar()
             fig = plt.figure()
             linplotdata = np.array([B[np.isfinite(B)].flatten(), A[np.isfinite(B)].flatten()])
-            plt.plot(linplotdata[0, :], linplotdata[1, :], 'ro')
+            plt.plot(linplotdata[0, :], linplotdata[1, :], ',')
 
     @property
     def psl(self):
