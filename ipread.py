@@ -19,7 +19,7 @@ import numexpr as ne
 
 
 __all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg', 'read']
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 # ----- Functions -----
