@@ -18,7 +18,7 @@ import numpy as np
 import numexpr as ne
 
 
-__all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg']
+__all__ = ['Infreader', 'IPreader', 'cnttopsl', 'readimg', 'read']
 __version__ = '0.2.0'
 
 
@@ -44,6 +44,15 @@ def readimg(filename, rows, cols):
     with open(filename, 'rb') as f:
         ret = np.reshape(np.fromfile(f, dtype=dt), (rows, cols))
     return np.array(ret, dtype=np.float64)
+
+
+def read(*args, **kwargs):
+    '''
+    Read the files. This is probably the function you are looking for.
+
+    Forwards all arguments to `IPreader.__init__()`.
+    '''
+    return IPreader(*args, **kwargs)
 
 
 # ----- Classes -----
