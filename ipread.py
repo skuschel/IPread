@@ -256,6 +256,8 @@ class IPreader(Infreader):
             + 'Scalefactors:    ' + str(self.scalefactors) + '\n' \
             + 'Scalefactorsstd: ' + str(self.scalefactorsstd) + ' >'
 
+    __repr__ = __str__
+
 
 def main():
     import argparse
