@@ -40,8 +40,8 @@ def readimg(filename, rows, cols):
     import numpy as np
     dt = np.dtype(np.uint16)
     dt = dt.newbyteorder('>')  # change to big endian
-    filename.strip('.img')
-    with open(filename + '.img', 'rb') as f:
+    filename = filename if filename.endswith('.img') else filename + '.img'
+    with open(filename, 'rb') as f:
         ret = np.reshape(np.fromfile(f, dtype=dt), (rows, cols))
     return np.array(ret, dtype=np.float64)
 
