@@ -189,8 +189,15 @@ class IPreader(Infreader):
             picn[picn > self.rawsaturate] = 0
             self.raw_hdr += self.scalefactors[n] * picn
             count += (picn > 0)
-        count[count == 0] = 1  # prefents dividing by zero
+        count[count == 0] = 1  # prevents dividing by zero
         self.raw_hdr /= count
+
+    def __array__(self, dtype=None):
+        '''
+        will be called by numpy function in case a numpy array is needed.
+        Contains the data in units of PSL.
+        '''
+        return np.asanyarray(self.psl, dtype=dtype)
 
     # Creats raw data, which is reduced by over- and underexposure
     def _getrealimg(self, n):
@@ -198,7 +205,7 @@ class IPreader(Infreader):
         realimg[(realimg > self.rawsaturate) | (realimg < self.rawminimum)] = np.nan
         return realimg
 
-    # Creats the quotien between picture n and the following picture
+    # Creats the quotient between picture n and the following picture
     def getimgquotient(self, n):
         imgquotient = self._getrealimg(n) / self._getrealimg(n + 1)
         return imgquotient
