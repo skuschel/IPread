@@ -14,6 +14,7 @@ import os
 import warnings
 import glob
 import copy
+import time
 import numpy as np
 import numexpr as ne
 
@@ -80,6 +81,7 @@ class Infreader(object):
         self.rows = int(inf[7])
         self.S = float(inf[8])
         self.L = float(inf[9])
+        self.time = time.strptime(inf[10].strip('\n'))
         if self.R != self.R2:
             warnings.warn('The Pixels of the IP picture are no squares.')
 
@@ -147,7 +149,9 @@ class IPreader(Infreader):
         # make list unique, so every file is only read once if
         # name* results in a list containing .img and .inf files.
         self.files = list(set(self.files))
-        self.files.sort()
+        infs = [Infreader('{}.inf'.format(f)) for f in self.files]
+        infs.sort(key=lambda s: s.time)
+        self.files = [inf.filename[:-4] for inf in infs]
 
         Infreader.__init__(self, self.files[0] + '.inf')
         for f in self.files:
